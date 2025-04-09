@@ -24,25 +24,25 @@ class InvoiceDocTemplate(BaseDocTemplate):
 
     def _create_template(self):
         frame = Frame(
-            self.leftMargin, self.bottomMargin + 20 * mm,
-            self.width, self.height - 30 * mm, id='content')
+            self.leftMargin, self.bottomMargin + 10 * mm,
+            self.width, self.height - 20 * mm, id='content')
         return PageTemplate(id='InvoiceTemplate', frames=frame, onPage=self._add_footer)
 
     def _add_footer(self, canvas, doc):
         canvas.saveState()
         canvas.setStrokeColor(BRAND_PRIMARY)
         canvas.setLineWidth(0.5)
-        canvas.line(doc.leftMargin, doc.bottomMargin + 15 * mm,
-                    doc.pagesize[0] - doc.rightMargin, doc.bottomMargin + 15 * mm)
+        canvas.line(doc.leftMargin, doc.bottomMargin + 10 * mm,
+                    doc.pagesize[0] - doc.rightMargin, doc.bottomMargin + 10 * mm)
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(BRAND_SECONDARY)
-        canvas.drawString(doc.leftMargin, doc.bottomMargin + 10 * mm,
+        canvas.drawString(doc.leftMargin, doc.bottomMargin + 6 * mm,
                           f"{self.company_name} • GST Registered Company")
-        canvas.drawCentredString(doc.pagesize[0] / 2, doc.bottomMargin + 10 * mm,
+        canvas.drawCentredString(doc.pagesize[0] / 2, doc.bottomMargin + 6 * mm,
                                  "www.paramountclothing.com")
-        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.bottomMargin + 10 * mm,
+        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.bottomMargin + 6 * mm,
                                f"Page {canvas.getPageNumber()}")
-        canvas.drawCentredString(doc.pagesize[0] / 2, doc.bottomMargin + 5 * mm,
+        canvas.drawCentredString(doc.pagesize[0] / 2, doc.bottomMargin + 2 * mm,
                                  "Email: info@paramountclothing.com • Phone: +65 9876 5432")
         canvas.restoreState()
 
@@ -51,35 +51,66 @@ def create_invoice(output_path):
     styles = doc.styles
 
     title_style = ParagraphStyle(name='Title', fontSize=16, alignment=TA_CENTER, textColor=BRAND_PRIMARY)
-    header_style = ParagraphStyle(name='Header', fontSize=12, textColor=BRAND_PRIMARY)
-    normal_style = ParagraphStyle(name='Normal', fontSize=10)
+    header_style = ParagraphStyle(name='Header', fontSize=10, textColor=BRAND_PRIMARY)
+    normal_style = ParagraphStyle(name='Normal', fontSize=8)
 
     elements = []
 
     elements.append(Paragraph("TAX INVOICE", title_style))
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
 
-    logo_path = "company_logo.png"  # Ensure this file exists in your directory
-    if os.path.exists(logo_path):
-        logo = Image(logo_path, width=2.5 * cm, height=2.5 * cm)
-    else:
-        logo = Spacer(1, 2.5 * cm)
+    logo_path = "company_logo.png"
+    logo = Image(logo_path, width=2.5 * cm, height=2.5 * cm) if os.path.exists(logo_path) else Spacer(1, 2.5 * cm)
 
-    company_info = [
-        [logo, Paragraph("<b>Paramount Clothing</b>", header_style),
-         Paragraph("Invoice #: PC-0001<br/>Date: 09.04.2025<br/>Our Ref: PC-0425-PI-01<br/>Your Ref: PO# 20250409", normal_style)]
-    ]
-    company_table = Table(company_info, colWidths=[2.8 * cm, 6.2 * cm, 6.5 * cm])
+    company_info = [[
+        logo,
+        Paragraph("<b>Paramount Clothing</b>", header_style),
+        Paragraph("Invoice #: PC-0001<br/>Date: 09.04.2025<br/>Our Ref: PC-0425-PI-01<br/>Your Ref: PO# 20250409", normal_style)
+    ]]
+    company_table = Table(company_info, colWidths=[2.5 * cm, 6.2 * cm, 10.0 * cm])
     elements.append(company_table)
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
 
-    customer_info = [
-        [Paragraph("<b>Bill To</b><br/>M/S. ABC STORES<br/>#01-04, BLOCK 219<br/>PARKLANDS<br/>SERANGOON<br/>SINGAPORE<br/>PIN: 315602<br/>GSTIN:", normal_style),
-         Paragraph("<b>Ship To</b><br/>M/S. ABC STORES<br/>#01-04, BLOCK 219<br/>PARKLANDS<br/>SERANGOON<br/>SINGAPORE<br/>PIN: 315602", normal_style)]
+    bill_to_data = [
+        ["Name:", "M/S. ABC STORES"],
+        ["Address:", "#01-04, BLOCK 219"],
+        ["Area:", "PARKLANDS, SERANGOON"],
+        ["City:", "SINGAPORE"],
+        ["PIN:", "315602"],
+        ["GSTIN:", ""]
     ]
-    customer_table = Table(customer_info, colWidths=[9 * cm, 7 * cm])
-    elements.append(customer_table)
-    elements.append(Spacer(1, 12))
+
+    ship_to_data = [
+        ["Name:", "M/S. ABC STORES"],
+        ["Address:", "#01-04, BLOCK 219"],
+        ["Area:", "PARKLANDS, SERANGOON"],
+        ["City:", "SINGAPORE"],
+        ["PIN:", "315602"]
+    ]
+
+    bill_to_table = Table(bill_to_data, colWidths=[3.2 * cm, 9.3 * cm])
+    ship_to_table = Table(ship_to_data, colWidths=[3.2 * cm, 9.3 * cm])
+    for tbl in [bill_to_table, ship_to_table]:
+        tbl.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 1),
+        ]))
+
+    contact_table = Table([
+        [Paragraph("<b>Bill To</b>", header_style), Paragraph("<b>Ship To</b>", header_style)],
+        [bill_to_table, ship_to_table]
+    ], colWidths=[9.55 * cm, 9.55 * cm])
+    contact_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), BRAND_LIGHT),
+        ('BOX', (0, 0), (-1, -1), 0.3, colors.grey),
+        ('INNERGRID', (0, 0), (-1, -1), 0.2, colors.lightgrey),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 4),
+    ]))
+    elements.append(contact_table)
+    elements.append(Spacer(1, 8))
 
     table_header = ["Sl. No.", "Description", "HSN/SAC", "Qty", "Unit", "Rate", "Amount", "GST%", "GST Amt", "Total"]
     items = [
@@ -91,61 +122,72 @@ def create_invoice(output_path):
         ["6", "RAYON PANT MATERIAL", "22021010", "59", "MTRS", "58.90", "3475.10", "7.00", "243.26", "3718.36"]
     ]
 
-    full_table = [table_header] + items
-    table = Table(full_table, repeatRows=1, colWidths=[1 * cm, 3.5 * cm, 2 * cm, 1.2 * cm, 1.5 * cm, 1.8 * cm, 2.2 * cm, 1.5 * cm, 2.2 * cm, 2.2 * cm])
+    table = Table([table_header] + items, repeatRows=1,
+                  colWidths=[1.2 * cm, 4 * cm, 2.2 * cm, 1.2 * cm, 1.4 * cm, 1.6 * cm, 2.1 * cm, 1.4 * cm, 2.1 * cm, 2.3 * cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), BRAND_PRIMARY),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 0.3, colors.grey),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('TOPPADDING', (0, 0), (-1, -1), 4)
+        ('FONTSIZE', (0, 0), (-1, -1), 7.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3)
     ]))
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
 
-    summary_table = Table([
+    summary_data = [
         ["Sub Total", "25,321.00"],
-        ["GST 7%", "1,772.47"],
+        ["GST @ 7%", "1,772.47"],
         ["Total", "27,093.47"]
-    ], colWidths=[12 * cm, 4 * cm])
+    ]
+    summary_table = Table(summary_data, colWidths=[15.5 * cm, 3.6 * cm])
     summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), BRAND_LIGHT),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('FONTNAME', (0, 0), (-1, -2), 'Helvetica'),
+        ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BACKGROUND', (0, 2), (-1, 2), BRAND_LIGHT),
+        ('LINEABOVE', (0, 2), (-1, 2), 0.5, colors.grey),
+        ('LINEBELOW', (0, 2), (-1, 2), 0.5, colors.grey)
     ]))
     elements.append(summary_table)
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
 
-    elements.append(Paragraph("Amount In Words: <b>Singapore Dollars Twenty Seven Thousand Ninety Three And Forty Seven Cents Only</b>", normal_style))
-    elements.append(Spacer(1, 12))
+    elements.append(Paragraph(
+        "Amount in Words: Singapore Dollars Twenty Seven Thousand Ninety Three And Forty Seven Cents Only",
+        ParagraphStyle(name='Words', fontSize=7.5)))
 
-    bank_details = [
-        ["Account Name:", "Paramount Clothing"],
-        ["A/C No.:", "7678197857"],
-        ["IFS Code:", "IDIB000P012"],
-        ["Bank Name:", "Indian Bank, Pallavaram"],
-        ["SWIFT Code:", "IDIBINBBMEP"]
+    small_style = ParagraphStyle(name="Small", fontSize=7.5)
+    bank_data = [
+        [Paragraph("<b>Account Name:</b>", small_style), Paragraph("Paramount Clothing", small_style),
+         Paragraph("<b>Bank Name:</b>", small_style), Paragraph("Indian Bank, Pallavaram", small_style)],
+        [Paragraph("<b>A/C No.:</b>", small_style), Paragraph("7678197857", small_style),
+         Paragraph("<b>SWIFT Code:</b>", small_style), Paragraph("IDIBINBBMEP", small_style)],
+        [Paragraph("<b>IFS Code:</b>", small_style), Paragraph("IDIB000P012", small_style),
+         Paragraph("", small_style), Paragraph("", small_style)]
     ]
-    bank_table = Table(bank_details, colWidths=[5 * cm, 10 * cm])
+
+    bank_table = Table(bank_data, colWidths=[3.2 * cm, 6.5 * cm, 3.2 * cm, 6.5 * cm])
     bank_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ('TOPPADDING', (0, 0), (-1, -1), 1),
+        ('LINEBELOW', (0, 0), (-1, -1), 0.1, colors.lightgrey)
     ]))
-    elements.append(Paragraph("<b>Bank Details:</b>", header_style))
+
+    elements.append(Spacer(1, 8))
+    elements.append(Paragraph("Bank Details", ParagraphStyle(name='BankHeader', fontSize=8.5, textColor=BRAND_PRIMARY)))
     elements.append(bank_table)
-    elements.append(Spacer(1, 24))
-
-    elements.append(Paragraph("<b>For Paramount Clothing</b><br/><br/><br/>Authorized Signatory", ParagraphStyle(name='Sign', alignment=TA_RIGHT)))
-
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph("For Paramount Clothing<br/><br/><br/>Authorized Signatory",
+                              ParagraphStyle(name='Sign', alignment=TA_RIGHT, fontSize=8)))
     doc.build(elements)
 
 if __name__ == "__main__":
     create_invoice("paramount_invoice_recreated.pdf")
-
